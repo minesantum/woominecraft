@@ -28,7 +28,7 @@ function get_rest_namespace() {
 function register_endpoints() {
 	register_rest_route(
 		get_rest_namespace(),
-		'/server/(?P<server>[\S]+)',
+		'/server/(?P<server>[^/]+)',
 		[
 			'methods'             => \WP_REST_Server::READABLE,
 			'callback'            => __NAMESPACE__ . '\\get_pending_orders',
@@ -38,10 +38,30 @@ function register_endpoints() {
 
 	register_rest_route(
 		get_rest_namespace(),
-		'/server/(?P<server>[\S]+)',
+		'/server/(?P<server>[^/]+)',
 		[
 			'methods'             => \WP_REST_Server::CREATABLE,
 			'callback'            => __NAMESPACE__ . '\\process_orders',
+			'permission_callback' => '__return_true',
+		]
+	);
+
+	register_rest_route(
+		get_rest_namespace(),
+		'/server/(?P<server>[^/]+)/categories',
+		[
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => __NAMESPACE__ . '\\get_categories',
+			'permission_callback' => '__return_true',
+		]
+	);
+
+	register_rest_route(
+		get_rest_namespace(),
+		'/server/(?P<server>[^/]+)/products_by_category',
+		[
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => __NAMESPACE__ . '\\get_products_by_category',
 			'permission_callback' => '__return_true',
 		]
 	);

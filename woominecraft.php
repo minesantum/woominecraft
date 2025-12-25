@@ -33,6 +33,7 @@ Orders\Cache\setup();
 
 // Load the REST API
 require_once WMC_INCLUDES . 'rest-api.php';
+require_once WMC_INCLUDES . 'rest-api-shop.php';
 REST\setup();
 
 require_once WMC_INCLUDES . 'woocommerce-admin.php';
