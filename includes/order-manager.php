@@ -87,7 +87,7 @@ function save_commands_to_order( $order_id ) {
 				}
 
 				foreach ( (array) $command as $c ) {
-					$tmp_array[ $server_key ][] = apply_filters( 'woominecraft_order_command', str_replace( '%s', $player_name, $c ), $c, $player_name );
+					$tmp_array[ $server_key ][] = apply_filters( 'woominecraft_order_command', str_replace( array( '{player}', '%s' ), $player_name, $c ), $c, $player_name );
 				}
 
 				// Filter out any empty values.

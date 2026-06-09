@@ -13,3 +13,8 @@ No edites el woocommerce, solo úsalo si lo necesitas
 Ahora mismo hay un texto que dice "CAUTION: Changing your server keys will invalidate any/all orders with the previous key. You cannot undo this"
 
 Quiere decir que si pongo una key y luego la cambio, se va todo a la mierda pero en realidad no se que ocurre, me gustaría que eso no ocurriera, que si cambio la key funcione todo perfectamente en el plugin de wordpress
+
+5.
+En el plugin de minecraft, si actualizo un ajuste, no hay comando /woo reload, estaría bien que lo hubiera y que hiciera reconexión
+
+6. En el plugin de wordpress no se por que coño en el comando tengo que poner "%s" para referirme al jugador, lo suyo sería que fuera "{player}"
