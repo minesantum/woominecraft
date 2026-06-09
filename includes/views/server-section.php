@@ -1,7 +1,7 @@
 <tr valign="top" class="woominecraft">
 	<th scope="row" class="titledesc"><?php esc_html_e( 'Available Servers', 'woominecraft' ); ?></th>
 	<td>
-		<p class="description"><?php esc_html_e( 'CAUTION: Changing your server keys will invalidate any/all orders with the previous key. You cannot undo this.', 'woominecraft' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Manage your Minecraft servers here.', 'woominecraft' ); ?></p>
 		<br /><br />
 		<table class="wc_shipping widefat" cellspacing="0">
 			<thead>

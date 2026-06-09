@@ -28,6 +28,7 @@ function setup() {
 	add_filter( 'woocommerce_get_settings_general', $n( 'wmc_settings' ) );
 	add_action( 'woocommerce_admin_field_wmc_servers', $n( 'render_servers_section' ) );
 	add_action( 'woocommerce_settings_save_general', $n( 'save_servers' ) );
+	add_action( 'update_option_' . WM_SERVERS, $n( 'migrate_server_keys' ), 10, 3 );
 
 	add_filter( 'manage_shop_order_posts_columns', $n( 'add_user_and_deliveries_header' ), 999 );
 	add_action( 'manage_shop_order_posts_custom_column', $n( 'add_users_and_deliveries' ), 10, 2 );
@@ -178,6 +179,56 @@ function save_servers() {
 	}
 
 	update_option( WM_SERVERS, $output );
+}
+
+/**
+ * Migrates server keys for orders and products when a server key is changed.
+ *
+ * @param array $old_value
+ * @param array $new_value
+ * @param string $option
+ */
+function migrate_server_keys( $old_value, $new_value, $option ) {
+	if ( ! is_array( $old_value ) || ! is_array( $new_value ) ) {
+		return;
+	}
+
+	global $wpdb;
+
+	// Compare old and new values by index since save_servers stores them sequentially
+	foreach ( $old_value as $index => $old_server ) {
+		if ( isset( $new_value[ $index ] ) ) {
+			$new_server = $new_value[ $index ];
+			$old_key    = isset( $old_server['key'] ) ? $old_server['key'] : '';
+			$new_key    = isset( $new_server['key'] ) ? $new_server['key'] : '';
+
+			if ( ! empty( $old_key ) && ! empty( $new_key ) && $old_key !== $new_key ) {
+				// Migrate orders
+				$wpdb->query( $wpdb->prepare(
+					"UPDATE {$wpdb->postmeta} SET meta_key = %s WHERE meta_key = %s",
+					'_wmc_commands_' . $new_key,
+					'_wmc_commands_' . $old_key
+				) );
+
+				$wpdb->query( $wpdb->prepare(
+					"UPDATE {$wpdb->postmeta} SET meta_key = %s WHERE meta_key = %s",
+					'_wmc_delivered_' . $new_key,
+					'_wmc_delivered_' . $old_key
+				) );
+
+				// Migrate products
+				$products = $wpdb->get_results( "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'wmc_commands'" );
+				foreach ( $products as $product_meta ) {
+					$commands = maybe_unserialize( $product_meta->meta_value );
+					if ( is_array( $commands ) && isset( $commands[ $old_key ] ) ) {
+						$commands[ $new_key ] = $commands[ $old_key ];
+						unset( $commands[ $old_key ] );
+						update_post_meta( $product_meta->post_id, 'wmc_commands', $commands );
+					}
+				}
+			}
+		}
+	}
 }
 
 /**
