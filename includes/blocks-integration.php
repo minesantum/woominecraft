@@ -11,43 +11,43 @@ namespace WooMinecraft\Blocks;
  * setup the block integration.
  */
 function setup() {
-	if ( function_exists( 'woocommerce_register_additional_checkout_field' ) ) {
-		add_action( 'woocommerce_init', __NAMESPACE__ . '\\register_checkout_fields' );
-		
-		// Ensure old behavior is maintained by syncing the new field to the old meta key.
-		add_action( 'woocommerce_checkout_order_created', __NAMESPACE__ . '\\copy_block_field_to_legacy_meta' );
+	// Intercept the rendering of WooCommerce cart/checkout blocks and replace them with classic shortcodes if needed.
+	add_filter( 'render_block', __NAMESPACE__ . '\\force_classic_blocks', 10, 2 );
+}
+
+/**
+ * Intercepts WooCommerce block rendering and forces classic shortcodes if Minecraft items are in the cart.
+ *
+ * @param string $block_content The block content.
+ * @param array  $block         The full block, including name and attributes.
+ * @return string
+ */
+function force_classic_blocks( $block_content, $block ) {
+	if ( ! isset( $block['blockName'] ) ) {
+		return $block_content;
 	}
-}
 
-/**
- * Registers the field for the Checkout Block.
- */
-function register_checkout_fields() {
-	woocommerce_register_additional_checkout_field(
-		'wmc_player_id',
-		array(
-			'label'    => __( 'Minecraft Username', 'woominecraft' ),
-			'location' => 'address', // 'address' places it in address forms, 'order' places it in "Additional Information"
-			'type'     => 'text',
-			'required' => true,
-			'placeholder' => __( 'Required Field', 'woominecraft' ),
-            'attributes' => array(
-                'autocomplete' => 'username',
-            ),
-		)
-	);
-}
+	$target_blocks = array( 'woocommerce/checkout', 'woocommerce/cart' );
 
-/**
- * Copies the block-based field value to the legacy meta key expected by the rest of the plugin.
- * 
- * @param \WC_Order $order
- */
-function copy_block_field_to_legacy_meta( $order ) {
-    $block_val = $order->get_meta( 'wmc_player_id' );
-    if ( ! empty( $block_val ) ) {
-        $order->update_meta_data( 'player_id', $block_val );
-        $order->save();
-    }
-}
+	if ( in_array( $block['blockName'], $target_blocks, true ) ) {
+		if ( ! class_exists( 'WooCommerce' ) || ! isset( WC()->cart ) ) {
+			return $block_content;
+		}
 
+		$items = WC()->cart->get_cart_contents();
+		if ( empty( $items ) || ! \WooMinecraft\Helpers\wmc_items_have_commands( $items ) ) {
+			return $block_content;
+		}
+
+		// If Minecraft items are present, fallback to classic shortcodes.
+		if ( 'woocommerce/checkout' === $block['blockName'] ) {
+			return do_shortcode( '[woocommerce_checkout]' );
+		}
+
+		if ( 'woocommerce/cart' === $block['blockName'] ) {
+			return do_shortcode( '[woocommerce_cart]' );
+		}
+	}
+
+	return $block_content;
+}

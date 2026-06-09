@@ -26,13 +26,34 @@ function setup() {
  * @return array
  */
 function simplify_checkout_fields( $fields ) {
+	if ( ! class_exists( 'WooCommerce' ) || ! isset( WC()->cart ) ) {
+		return $fields;
+	}
+
+	$items = WC()->cart->get_cart_contents();
+	if ( empty( $items ) || ! wmc_items_have_commands( $items ) ) {
+		return $fields;
+	}
+
 	// Standard Unsets
-	$targets = [ 'billing_first_name', 'billing_last_name', 'billing_company', 'billing_address_1', 'billing_address_2', 'billing_city', 'billing_state', 'billing_postcode', 'billing_country', 'billing_phone', 'order_comments', 'billing_email' ];
+	$targets = [ 'billing_first_name', 'billing_last_name', 'billing_company', 'billing_address_1', 'billing_address_2', 'billing_city', 'billing_state', 'billing_postcode', 'billing_country', 'billing_phone', 'order_comments' ];
 	
 	// Remove Billing fields
 	foreach ( $targets as $target ) {
 		if ( isset( $fields['billing'][ $target ] ) ) {
 			unset( $fields['billing'][ $target ] );
+		}
+	}
+
+	// Hide the email field and populate it automatically
+	if ( isset( $fields['billing']['billing_email'] ) ) {
+		$fields['billing']['billing_email']['type'] = 'hidden';
+		if ( is_user_logged_in() ) {
+			$fields['billing']['billing_email']['default'] = wp_get_current_user()->user_email;
+		} else {
+			// Fallback for guests so validation doesn't fail
+			$domain = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : 'example.com';
+			$fields['billing']['billing_email']['default'] = 'guest@' . $domain;
 		}
 	}
 	
@@ -45,8 +66,6 @@ function simplify_checkout_fields( $fields ) {
 	if ( isset( $fields['order']['order_comments'] ) ) {
 		unset( $fields['order']['order_comments'] );
 	}
-	
-	// Keep billing_email as it's usually required for account creation/receipts
 	
 	return $fields;
 }
