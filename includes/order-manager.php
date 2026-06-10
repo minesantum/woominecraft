@@ -36,7 +36,7 @@ function require_fields() {
 
 	$player_id = isset( $_POST['player_id'] ) ? sanitize_text_field( $_POST['player_id'] ) : false; // @codingStandardsIgnoreLine No nonce needed.
 	if ( ! $player_id ) {
-		wc_add_notice( __( 'You MUST provide a Minecraft username.', 'woominecraft' ), 'error' );
+		wc_add_notice( __( 'You MUST provide a Premium Minecraft username', 'woominecraft' ), 'error' );
 		return;
 	}
 }
@@ -126,7 +126,7 @@ function additional_checkout_field( $cart ) {
 			array(
 				'type'        => 'text',
 				'class'       => array(),
-				'label'       => __( 'Player ID ( Minecraft Username ):', 'woominecraft' ),
+				'label'       => __( 'Minecraft Username', 'woominecraft' ),
 				'placeholder' => __( 'Required Field', 'woominecraft' ),
 				'required'    => true,
 			),

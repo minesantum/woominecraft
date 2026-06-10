@@ -17,6 +17,23 @@ function setup() {
 
 	// Simplify Checkout: Remove unnecessary fields
 	add_filter( 'woocommerce_checkout_fields', $n( 'simplify_checkout_fields' ), 9999 );
+	add_filter( 'woocommerce_enable_order_notes_field', $n( 'disable_order_notes_if_minecraft' ), 9999 );
+}
+
+/**
+ * Disables the order notes field if minecraft items are in cart.
+ */
+function disable_order_notes_if_minecraft( $enabled ) {
+	if ( ! class_exists( 'WooCommerce' ) || ! isset( WC()->cart ) ) {
+		return $enabled;
+	}
+
+	$items = WC()->cart->get_cart_contents();
+	if ( empty( $items ) || ! wmc_items_have_commands( $items ) ) {
+		return $enabled;
+	}
+
+	return false;
 }
 
 /**
@@ -48,6 +65,9 @@ function simplify_checkout_fields( $fields ) {
 	// Hide the email field and populate it automatically
 	if ( isset( $fields['billing']['billing_email'] ) ) {
 		$fields['billing']['billing_email']['type'] = 'hidden';
+		unset( $fields['billing']['billing_email']['label'] ); // Eliminar la etiqueta
+		$fields['billing']['billing_email']['class'] = [ 'hidden', 'hide' ]; // Añadir clases para ocultar el wrapper
+		
 		if ( is_user_logged_in() ) {
 			$fields['billing']['billing_email']['default'] = wp_get_current_user()->user_email;
 		} else {
