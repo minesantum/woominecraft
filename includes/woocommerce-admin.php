@@ -34,6 +34,38 @@ function setup() {
 	add_action( 'manage_shop_order_posts_custom_column', $n( 'add_users_and_deliveries' ), 10, 2 );
 	add_filter( 'manage_edit-shop_order_sortable_columns', $n( 'make_player_sortable' ) );
 	add_action( 'pre_get_posts', $n( 'sort_by_player_name' ) );
+	add_filter( 'product_type_options', $n( 'add_minecraft_product_option' ) );
+	add_filter( 'woocommerce_product_data_tabs', $n( 'remove_shipping_tab' ) );
+}
+
+/**
+ * Adds the Minecraft Product read-only checkbox to product data.
+ *
+ * @param array $options
+ * @return array
+ */
+function add_minecraft_product_option( $options ) {
+	if ( isset( $options['virtual'] ) ) {
+		unset( $options['virtual'] );
+	}
+	if ( isset( $options['downloadable'] ) ) {
+		unset( $options['downloadable'] );
+	}
+
+	return $options;
+}
+
+/**
+ * Removes the shipping tab from the product data meta box since all products are virtual.
+ *
+ * @param array $tabs
+ * @return array
+ */
+function remove_shipping_tab( $tabs ) {
+	if ( isset( $tabs['shipping'] ) ) {
+		unset( $tabs['shipping'] );
+	}
+	return $tabs;
 }
 
 /**
@@ -260,6 +292,14 @@ function wmc_settings( $settings ) {
 
 	$settings[] = array(
 		'type' => 'wmc_servers',
+	);
+
+	$settings[] = array(
+		'name'    => __( 'Auto-Complete Order Status', 'woominecraft' ),
+		'desc'    => __( 'Automatically complete orders', 'woominecraft' ),
+		'id'      => 'wmc_autocomplete_orders',
+		'type'    => 'checkbox',
+		'default' => 'yes',
 	);
 
 	$settings[] = array(
@@ -495,13 +535,6 @@ function _save_commands( $post_id, $type ) {
 	}
 
 	_save_product_commands( $post_id, $variable_commands[ 'post_' . $post_id ] );
-
-	// Save autocomplete status
-	if ( isset( $_POST['wmc_autocomplete'][ $type ][ 'post_' . $post_id ] ) && 'yes' === $_POST['wmc_autocomplete'][ $type ][ 'post_' . $post_id ] ) {
-		update_post_meta( $post_id, '_wmc_autocomplete', 'yes' );
-	} else {
-		delete_post_meta( $post_id, '_wmc_autocomplete' );
-	}
 }
 
 /**
