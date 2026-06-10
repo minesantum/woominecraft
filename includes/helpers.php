@@ -18,6 +18,7 @@ function setup() {
 	// Simplify Checkout: Remove unnecessary fields
 	add_filter( 'woocommerce_checkout_fields', $n( 'simplify_checkout_fields' ), 9999 );
 	add_filter( 'woocommerce_enable_order_notes_field', $n( 'disable_order_notes_if_minecraft' ), 9999 );
+	add_filter( 'woocommerce_order_item_needs_processing', $n( 'autocomplete_minecraft_orders' ), 10, 3 );
 }
 
 /**
@@ -188,4 +189,38 @@ function get_order_query_params( $server ) {
 			),
 		)
 	);
+}
+
+/**
+ * Auto-completes the order if the item has the wmc_autocomplete meta.
+ * By returning false, we tell WooCommerce that this item doesn't need processing.
+ * If all items in the cart don't need processing, the order auto-completes.
+ *
+ * @param bool $needs_processing
+ * @param \WC_Product $product
+ * @param int $order_id
+ * @return bool
+ */
+function autocomplete_minecraft_orders( $needs_processing, $product, $order_id ) {
+	if ( ! $product || ! is_object( $product ) ) {
+		return $needs_processing;
+	}
+
+	$product_id = $product->get_id();
+	if ( $product->is_type( 'variation' ) ) {
+		// check variation first, fallback to parent
+		if ( 'yes' === get_post_meta( $product_id, '_wmc_autocomplete', true ) ) {
+			return false; // Does not need processing
+		}
+		$parent_id = $product->get_parent_id();
+		if ( 'yes' === get_post_meta( $parent_id, '_wmc_autocomplete', true ) ) {
+			return false;
+		}
+	} else {
+		if ( 'yes' === get_post_meta( $product_id, '_wmc_autocomplete', true ) ) {
+			return false;
+		}
+	}
+
+	return $needs_processing;
 }

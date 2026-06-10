@@ -495,6 +495,13 @@ function _save_commands( $post_id, $type ) {
 	}
 
 	_save_product_commands( $post_id, $variable_commands[ 'post_' . $post_id ] );
+
+	// Save autocomplete status
+	if ( isset( $_POST['wmc_autocomplete'][ $type ][ 'post_' . $post_id ] ) && 'yes' === $_POST['wmc_autocomplete'][ $type ][ 'post_' . $post_id ] ) {
+		update_post_meta( $post_id, '_wmc_autocomplete', 'yes' );
+	} else {
+		delete_post_meta( $post_id, '_wmc_autocomplete' );
+	}
 }
 
 /**
